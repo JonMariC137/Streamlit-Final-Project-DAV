@@ -1,5 +1,3 @@
-# streamlit_app.py
-# Fully robust Streamlit app with automatic CSV cleaning
 
 import streamlit as st
 import pandas as pd
@@ -25,9 +23,7 @@ Upload your CSV and this app will automatically clean it:
 - Perform clustering and regression
 """)
 
-# =========================
 # Sidebar: DATA INPUT
-# =========================
 st.sidebar.header("Upload Dataset")
 uploaded = st.sidebar.file_uploader("Upload your CSV file", type=["csv"])
 
@@ -35,18 +31,14 @@ if not uploaded:
     st.info("Please upload your CSV dataset to begin.")
     st.stop()
 
-# =========================
 # Load CSV
-# =========================
 @st.cache_data
 def load_csv(file) -> pd.DataFrame:
     return pd.read_csv(file)
 
 df = load_csv(uploaded)
 
-# =========================
 # Auto-detect columns
-# =========================
 st.header("Column Selection")
 columns = df.columns.tolist()
 
@@ -57,9 +49,7 @@ start_col = st.selectbox("Start Date Column", options=columns)
 end_col = st.selectbox("End Date Column", options=columns)
 status_col = st.selectbox("Status Column", options=columns)
 
-# =========================
 # Auto-Clean Project Cost
-# =========================
 def clean_cost(x):
     if pd.isna(x):
         return pd.NA
@@ -72,9 +62,7 @@ def clean_cost(x):
 
 df['project_cost'] = df[cost_col].apply(clean_cost)
 
-# =========================
 # Auto-Clean Dates
-# =========================
 def parse_date(x):
     if pd.isna(x):
         return pd.NaT
@@ -91,22 +79,16 @@ def parse_date(x):
 df['start_date'] = df[start_col].apply(parse_date)
 df['end_date'] = df[end_col].apply(parse_date)
 
-# =========================
 # Compute duration
-# =========================
 df['duration_days'] = (df['end_date'] - df['start_date']).dt.days
 df['duration_years'] = df['duration_days'] / 365.25
 
-# =========================
 # Standardize text columns
-# =========================
 df['project_name'] = df[project_col].fillna("Unnamed Project").astype(str)
 df['region'] = df[region_col].fillna("Unknown Region").astype(str)
 df['status'] = df[status_col].fillna("Unknown Status").astype(str)
 
-# =========================
 # Valid rows for analysis
-# =========================
 df_valid = df[['project_cost', 'duration_years']].copy()
 df_valid['project_cost'] = pd.to_numeric(df_valid['project_cost'], errors='coerce')
 df_valid['duration_years'] = pd.to_numeric(df_valid['duration_years'], errors='coerce')
@@ -124,9 +106,7 @@ if df_valid.dropna().shape[0] < min_rows:
 st.subheader("Valid Rows for Analysis")
 st.write(f"Rows available: {len(df_valid)}")
 
-# =========================
 # EDA
-# =========================
 st.header("Exploratory Data Analysis")
 col1, col2 = st.columns(2)
 with col1:
@@ -151,9 +131,7 @@ for i in range(len(corr.columns)):
         ax.text(j, i, f"{corr.iloc[i,j]:.2f}", ha='center', va='center', color='black')
 st.pyplot(fig3)
 
-# =========================
 # K-Means Clustering
-# =========================
 st.header("K-Means Clustering")
 features = ['project_cost', 'duration_years']
 X = df_valid[features]
@@ -172,9 +150,7 @@ st.subheader("Cluster Visualization (PCA)")
 fig4 = px.scatter(X_clustered, x='pc1', y='pc2', color=X_clustered['cluster'].astype(str))
 st.plotly_chart(fig4, use_container_width=True)
 
-# =========================
 # Regression
-# =========================
 st.header("Regression Analysis")
 X_reg = df_valid[['duration_years']]
 y_reg = df_valid['project_cost']
@@ -189,9 +165,9 @@ fig5.add_trace(go.Scatter(x=df_valid['duration_years'], y=df_valid['project_cost
 fig5.add_trace(go.Scatter(x=df_valid['duration_years'], y=y_pred, mode='lines', name='Regression Line'))
 st.plotly_chart(fig5, use_container_width=True)
 
-# =========================
+
 # Conclusions
-# =========================
+
 st.header("Conclusions & Recommendations")
 st.markdown("""
 ### Key Findings
